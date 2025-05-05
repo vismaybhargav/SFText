@@ -19,14 +19,15 @@ int main() {
     }
 
     const sf::Glyph exampleGlyph { font.getGlyph('A', 30, false) };
+    const sf::Glyph tabGlyph { font.getGlyph('\t', 30, false) };
     const float line_height{exampleGlyph.bounds.size.y + 10.f};
-
     std::vector<sf::String> text_lines;
     text_lines.emplace_back("");
 
     sft::Cursor cursor {0 , 0};
     sf::RectangleShape cursor_rect {sf::Vector2f{5, exampleGlyph.bounds.size.y + 10.f}};
     char32_t char_typed;
+
 
     sf::Clock delta_clock;
     while (window.isOpen()) {
@@ -45,11 +46,21 @@ int main() {
                             cursor.col = static_cast<int>(text_lines.back().getSize());
                         }
                     } else {
-                        sf::String str = text_lines.at(cursor.row);
+                        sf::String str { text_lines.at(cursor.row) };
                         text_lines.at(cursor.row) = str.substring(0, str.getSize() - 1);
                         cursor.col--;
                     }
                 } else if (key_pressed->scancode == sf::Keyboard::Scancode::Enter) {
+                    if (cursor.row == text_lines.size() - 1) {
+                        if (cursor.col == text_lines.at(cursor.col).getSize() - 1) {
+                            text_lines.emplace_back("");
+                        } else {
+                            text_lines.emplace_back(text_lines.at(cursor.col).substring(cursor.col));
+                        }
+                    } else {
+                        sf::String str { text_lines.at(cursor.row).substring(cursor.col) };
+                        text_lines.insert(cursor.row, str);
+                    }
                     text_lines.emplace_back("");
                     cursor.row++;
                     cursor.col = 0;
@@ -85,7 +96,6 @@ int main() {
         }
 
         cursor_rect.setPosition({cursor.col * exampleGlyph.advance, cursor.row * line_height});
-
         ImGui::SFML::Update(window, delta_clock.restart());
 
         ImGui::Begin("Test");
